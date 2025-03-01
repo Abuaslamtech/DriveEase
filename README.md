@@ -1,3 +1,4 @@
+
 # DriveEase - Car Rental Frontend
 
 DriveEase is a modern, responsive car rental platform built with React and Tailwind CSS. The application provides an intuitive interface for users to browse cars, view popular listings with dynamically generated images, and manage user authentication. **Backend integration is planned for a future release**, and the project is structured to easily accommodate API endpoints once the backend is ready.
@@ -33,5 +34,6 @@ DriveEase is a modern, responsive car rental platform built with React and Tailw
 - **React Router**: Client-side routing for single-page applications.
 - **Lucide React**: Modern icon library for scalable icons.
 - **Vite / Create React App (CRA)**: Bundler and development server for fast build times.
+
 
 
