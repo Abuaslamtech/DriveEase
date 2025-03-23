@@ -9,13 +9,63 @@ import {
   ArrowLeft,
   ChevronRight,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../contexts/AuthContext";
 import { CarContext } from "../contexts/CarContext";
 
 const AuthPage = () => {
+  const navigate = useNavigate();
+  const { login, register } = useContext(AuthContext);
+
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+  });
   const { cars } = useContext(CarContext);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    const result = await register(formData);
+    
+    if (result.success) {
+      alert("Registration successful! Please log in.");
+      setIsLogin(true);
+    } else {
+      setError(result.error);
+      alert(result.error);
+    }
+    
+    setLoading(false);
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    const result = await login(formData.email, formData.password);
+    
+    if (result.success) {
+      alert("Login successful!");
+      navigate("/");
+    } else {
+      setError(result.error);
+      alert(result.error);
+    }
+    
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
@@ -117,7 +167,7 @@ const AuthPage = () => {
 
                 {/* Auth Form */}
                 {isLogin ? (
-                  <form>
+                  <form onSubmit={handleLogin}>
                     <div className="space-y-5">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -130,6 +180,9 @@ const AuthPage = () => {
                           />
                           <input
                             type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
                             placeholder="your@email.com"
                             className="pl-10 pr-3 w-full border border-gray-300 rounded-lg py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                           />
@@ -147,6 +200,9 @@ const AuthPage = () => {
                           />
                           <input
                             type={showPassword ? "text" : "password"}
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
                             placeholder="••••••••"
                             className="pl-10 pr-10 w-full border border-gray-300 rounded-lg py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                           />
@@ -212,7 +268,7 @@ const AuthPage = () => {
                     </div>
                   </form>
                 ) : (
-                  <form>
+                  <form onSubmit={handleRegister}>
                     <div className="space-y-5">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -221,6 +277,9 @@ const AuthPage = () => {
                           </label>
                           <input
                             type="text"
+                            name="firstName"
+                            value={formData.firstName}
+                            onChange={handleChange}
                             placeholder="John"
                             className="w-full border border-gray-300 rounded-lg py-3 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                           />
@@ -231,6 +290,9 @@ const AuthPage = () => {
                           </label>
                           <input
                             type="text"
+                            name="lastName"
+                            value={formData.lastName}
+                            onChange={handleChange}
                             placeholder="Doe"
                             className="w-full border border-gray-300 rounded-lg py-3 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                           />
@@ -248,6 +310,9 @@ const AuthPage = () => {
                           />
                           <input
                             type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
                             placeholder="your@email.com"
                             className="pl-10 w-full border border-gray-300 rounded-lg py-3 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                           />
@@ -265,6 +330,9 @@ const AuthPage = () => {
                           />
                           <input
                             type={showPassword ? "text" : "password"}
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
                             placeholder="••••••••"
                             className="pl-10 pr-10 w-full border border-gray-300 rounded-lg py-3 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                           />

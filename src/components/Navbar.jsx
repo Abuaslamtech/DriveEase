@@ -1,9 +1,48 @@
-import { Car, LogIn, Menu, User, X } from "lucide-react";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Car, LogIn, Menu, User, X, LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userData, setUserData] = useState({ firstName: "", lastName: "" });
+  const navigate = useNavigate();
+
+  // Check authentication status on component mount
+  useEffect(() => {
+    checkAuthentication();
+  }, []);
+
+  const checkAuthentication = () => {
+    const token = localStorage.getItem("token");
+    
+    if (token) {
+      // Get user data from localStorage or decode from JWT
+      // For this example, we'll assume user data is stored in localStorage
+      const firstName = localStorage.getItem("firstName") || "User";
+      const lastName = localStorage.getItem("lastName") || "";
+      
+      setUserData({ firstName, lastName });
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("firstName");
+    localStorage.removeItem("lastName");
+    setIsAuthenticated(false);
+    navigate("/");
+  };
+
+  // Get user initials for the avatar
+  const getUserInitials = () => {
+    const firstInitial = userData.firstName ? userData.firstName.charAt(0) : "";
+    const lastInitial = userData.lastName ? userData.lastName.charAt(0) : "";
+    return (firstInitial + lastInitial).toUpperCase();
+  };
 
   return (
     <nav className="bg-white shadow py-4 px-6">
@@ -22,33 +61,53 @@ const Navbar = () => {
           <Link to="/car-page" className="font-medium text-gray-700 hover:text-blue-600 transition-colors">
             Cars
           </Link>
-          <Link to="/" className="font-medium text-gray-700 hover:text-blue-600 transition-colors">
-            Locations
+          <Link to="/my-rentals" className="font-medium text-gray-700 hover:text-blue-600 transition-colors">
+            My Rentals
           </Link>
-          <Link to="/" className="font-medium text-gray-700 hover:text-blue-600 transition-colors">
+          <Link to="/about" className="font-medium text-gray-700 hover:text-blue-600 transition-colors">
             About
           </Link>
-          <Link to="/" className="font-medium text-gray-700 hover:text-blue-600 transition-colors">
+          <Link to="/contact" className="font-medium text-gray-700 hover:text-blue-600 transition-colors">
             Contact
           </Link>
         </div>
 
-        {/* Desktop Auth Buttons */}
+        {/* Desktop Auth Buttons or User Profile */}
         <div className="hidden md:flex items-center space-x-4">
-          <Link
-            to="/Auth"
-            className="flex items-center space-x-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-          >
-            <LogIn size={20} />
-            <span>Login</span>
-          </Link>
-          <Link
-            to="/Auth"
-            className="flex items-center space-x-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            <User size={20} />
-            <span>Register</span>
-          </Link>
+          {isAuthenticated ? (
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-medium">
+                  {getUserInitials()}
+                </div>
+                <span className="font-medium text-gray-700">{userData.firstName}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                <LogOut size={20} />
+                <span>Logout</span>
+              </button>
+            </div>
+          ) : (
+            <>
+              <Link
+                to="/Auth"
+                className="flex items-center space-x-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                <LogIn size={20} />
+                <span>Login</span>
+              </Link>
+              <Link
+                to="/Auth"
+                className="flex items-center space-x-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <User size={20} />
+                <span>Register</span>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -81,20 +140,40 @@ const Navbar = () => {
               Contact
             </Link>
             <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-              <Link
-                to="/Auth"
-                className="flex items-center justify-center space-x-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-              >
-                <LogIn size={20} />
-                <span>Login</span>
-              </Link>
-              <Link
-                to="/Auth"
-                className="flex items-center justify-center space-x-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                <User size={20} />
-                <span>Register</span>
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <div className="flex items-center space-x-2 py-2">
+                    <div className="h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-medium">
+                      {getUserInitials()}
+                    </div>
+                    <span className="font-medium text-gray-700">{userData.firstName}</span>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center justify-center space-x-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <LogOut size={20} />
+                    <span>Logout</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/Auth"
+                    className="flex items-center justify-center space-x-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <LogIn size={20} />
+                    <span>Login</span>
+                  </Link>
+                  <Link
+                    to="/Auth"
+                    className="flex items-center justify-center space-x-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    <User size={20} />
+                    <span>Register</span>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

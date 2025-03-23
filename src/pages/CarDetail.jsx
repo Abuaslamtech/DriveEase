@@ -1,7 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { CarContext, createCarImage } from "../contexts/CarContext";
+import { AuthContext } from "../contexts/AuthContext"; // You'll need to create this
 import Navbar from "../components/Navbar";
+import RentalForm from "../components/RentalForm"; // We'll create this component
 import {
   Car,
   Calendar,
@@ -21,16 +23,18 @@ const CarDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { cars } = useContext(CarContext);
+  const { isAuthenticated } = useContext(AuthContext); // Authentication state
   const [car, setCar] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageAngles] = useState(["front", "side", "back", "aerial"]);
+  const [showRentalForm, setShowRentalForm] = useState(false);
 
   useEffect(() => {
     // Get car ID from URL params
     const params = new URLSearchParams(location.search);
     const carId = params.get("id");
-    
+
     if (!carId || !cars || cars.length === 0) {
       // If no ID is provided or cars aren't loaded yet, redirect to catalog
       if (!cars || cars.length === 0) {
@@ -38,17 +42,17 @@ const CarDetail = () => {
       }
       return;
     }
-    
+
     // Find car in context
-    const foundCar = cars.find(c => c.id === parseInt(carId));
-    
+    const foundCar = cars.find((c) => c.id === parseInt(carId));
+
     if (foundCar) {
       setCar(foundCar);
     } else {
       console.log("Car not found with ID:", carId);
       // You could navigate to a 404 page here
     }
-    
+
     setLoading(false);
   }, [location.search, cars]);
 
@@ -68,7 +72,7 @@ const CarDetail = () => {
   }
 
   // Generate images using the existing createCarImage function from context
-  const images = imageAngles.map(angle => createCarImage(car, angle));
+  const images = imageAngles.map((angle) => createCarImage(car, angle));
 
   const handleNext = () => {
     setCurrentImageIndex((prevIndex) =>
@@ -84,7 +88,11 @@ const CarDetail = () => {
 
   // Find related cars (same make or similar price range)
   const relatedCars = cars
-    .filter(c => c.id !== car.id && (c.make === car.make || Math.abs(c.price - car.price) < 5000))
+    .filter(
+      (c) =>
+        c.id !== car.id &&
+        (c.make === car.make || Math.abs(c.price - car.price) < 5000)
+    )
     .slice(0, 3);
 
   // Handle image error
@@ -94,14 +102,28 @@ const CarDetail = () => {
     e.target.onerror = null; // Prevent infinite error loop
   };
 
+  // Function to handle rent button click
+  const handleRentClick = () => {
+    if (!isAuthenticated) {
+      // Redirect to login if user is not authenticated
+      navigate(
+        "/login?redirect=" + encodeURIComponent(`/car-detail?id=${car.id}`)
+      );
+      return;
+    }
+
+    // Show rental form
+    setShowRentalForm(true);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-6">
-            <Link to="/" 
-            
+            <Link
+              to="/"
               className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
               onClick={() => navigate(-1)}
             >
@@ -161,17 +183,25 @@ const CarDetail = () => {
               <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h1 className="text-2xl font-bold">{car.make} {car.model}</h1>
-                    <p className="text-gray-600">{car.year} {car.fuelType}</p>
+                    <h1 className="text-2xl font-bold">
+                      {car.make} {car.model}
+                    </h1>
+                    <p className="text-gray-600">
+                      {car.year} {car.fuelType}
+                    </p>
                   </div>
-                  <div className="text-2xl font-bold text-blue-600">${car.price.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    ${car.price.toLocaleString()}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div className="flex flex-col items-center justify-center p-3 bg-gray-50 rounded-lg">
                     <Gauge size={20} className="text-blue-600 mb-1" />
                     <p className="text-sm text-gray-600">Mileage</p>
-                    <p className="font-medium">{car.mileage.toLocaleString()} mi</p>
+                    <p className="font-medium">
+                      {car.mileage.toLocaleString()} mi
+                    </p>
                   </div>
                   <div className="flex flex-col items-center justify-center p-3 bg-gray-50 rounded-lg">
                     <Car size={20} className="text-blue-600 mb-1" />
@@ -225,8 +255,74 @@ const CarDetail = () => {
                 </div>
               </div>
             </div>
-
             <div className="md:col-span-1">
+              <div className="bg-white rounded-lg shadow-md p-6 sticky top-6">
+                {showRentalForm ? (
+                  <RentalForm
+                    car={car}
+                    onClose={() => setShowRentalForm(false)}
+                  />
+                ) : (
+                  <div className="mb-6">
+                    <h2 className="text-lg font-bold mb-3">Rent This Car</h2>
+                    <p className="text-gray-700 mb-4">
+                      Daily rate:{" "}
+                      <span className="font-bold text-blue-600">
+                        ${car.price.toLocaleString()}
+                      </span>
+                    </p>
+                    <button
+                      onClick={handleRentClick}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-md transition-colors font-medium mb-4"
+                    >
+                      Rent Now
+                    </button>
+                    <p className="text-sm text-gray-500">
+                      Rent this {car.make} {car.model} now. Secure payment and
+                      easy cancellation.
+                    </p>
+
+                    <hr className="my-6" />
+
+                    <h3 className="font-bold text-md mb-2">Contact Us</h3>
+                    <p className="text-gray-700 mb-4">
+                      Have questions about this {car.make} {car.model}?
+                    </p>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-gray-700 text-sm font-medium mb-1">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="your@email.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-gray-700 text-sm font-medium mb-1">
+                          Message
+                        </label>
+                        <textarea
+                          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          rows="3"
+                          placeholder="I have a question about this car..."
+                        ></textarea>
+                      </div>
+                      <button
+                        type="button"
+                        className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-md transition-colors font-medium"
+                      >
+                        Send Message
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* <div className="md:col-span-1">
               <div className="bg-white rounded-lg shadow-md p-6 sticky top-6">
                 <div className="mb-6">
                   <h2 className="text-lg font-bold mb-3">Contact Information</h2>
@@ -283,13 +379,14 @@ const CarDetail = () => {
                   </form>
                 </div>
               </div>
-            </div>
-          </div>
+            </div> */}
 
           {/* Related Cars */}
           {relatedCars.length > 0 && (
             <div className="mt-8">
-              <h2 className="text-2xl font-bold mb-6">Similar Cars You Might Like</h2>
+              <h2 className="text-2xl font-bold mb-6">
+                Similar Cars You Might Like
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {relatedCars.map((relatedCar) => (
                   <div
@@ -303,14 +400,20 @@ const CarDetail = () => {
                       onError={handleImageError}
                     />
                     <div className="p-4">
-                      <h3 className="font-bold">{relatedCar.make} {relatedCar.model}</h3>
-                      <p className="text-gray-600 text-sm">{relatedCar.year} • {relatedCar.transmission}</p>
+                      <h3 className="font-bold">
+                        {relatedCar.make} {relatedCar.model}
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        {relatedCar.year} • {relatedCar.transmission}
+                      </p>
                       <div className="flex justify-between items-center mt-3">
                         <span className="font-bold text-blue-600">
                           ${relatedCar.price.toLocaleString()}
                         </span>
                         <button
-                          onClick={() => navigate(`/car-detail?id=${relatedCar.id}`)}
+                          onClick={() =>
+                            navigate(`/car-detail?id=${relatedCar.id}`)
+                          }
                           className="text-blue-600 hover:text-blue-800 font-medium text-sm"
                         >
                           View Details
