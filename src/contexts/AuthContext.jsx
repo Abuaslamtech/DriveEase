@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/login', {
+      const response = await axios.post('https://api-easedrive.onrender.com/api/auth/login', {
         email,
         password
       });
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/register', userData);
+      const response = await axios.post('https://api-easedrive.onrender.com/api/auth/register', userData);
       return { success: true };
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
